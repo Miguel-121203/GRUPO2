@@ -1,2 +1,7 @@
 # CORHUILA
 Repositorio para los cursos de Corhuila
+GRUPO2 
+
+MIGUEL ANGEL BELTRAN
+NICOLAS RIVERA 
+HUBER PARRA MOLINA
