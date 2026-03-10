@@ -13,17 +13,17 @@ class Perceptron:
     ):
         self.lr = learning_rate
         self.max_epochs = max_epochs
-
         rng = np.random.default_rng(random_state)
-        self.weights: np.ndarray = rng.uniform(-0.5, 0.5, n_inputs)
+        self.weights: np.ndarray = rng.uniform(-0.5, 0.5, n_inputs)  # pesos iniciales aleatorios
         self.bias: float = 0.0
         self.error_history: list[int] = []
 
     def _step(self, z: np.ndarray) -> np.ndarray:
+        # Función de activación escalón: 1 si z >= 0, 0 si no
         return (z >= 0).astype(int)
 
     def predict(self, X: np.ndarray) -> np.ndarray:
-        z = X @ self.weights + self.bias
+        z = X @ self.weights + self.bias  # combinación lineal: z = w·x + b
         return self._step(z)
 
     def train(self, X: np.ndarray, y: np.ndarray) -> None:
@@ -36,6 +36,7 @@ class Perceptron:
                 y_hat = self.predict(xi.reshape(1, -1))[0]
                 error = int(yi) - int(y_hat)
 
+                # Regla de Rosenblatt: actualiza solo si hay error
                 self.weights += self.lr * error * xi
                 self.bias    += self.lr * error
 
@@ -44,7 +45,7 @@ class Perceptron:
 
             self.error_history.append(epoch_errors)
 
-            if epoch_errors == 0:
+            if epoch_errors == 0:  # convergencia: ningún error en la época
                 print(f"  Convergió en la época {epoch}.")
                 break
         else:
@@ -64,12 +65,12 @@ def plot_decision_boundary(
     x_min, x_max = X[:, 0].min() - 0.5, X[:, 0].max() + 0.5
     y_min, y_max = X[:, 1].min() - 0.5, X[:, 1].max() + 0.5
 
+    # Malla de puntos para colorear las regiones de cada clase
     xx, yy = np.meshgrid(
         np.linspace(x_min, x_max, 300),
         np.linspace(y_min, y_max, 300),
     )
     Z = perceptron.predict(np.c_[xx.ravel(), yy.ravel()]).reshape(xx.shape)
-
     ax.contourf(xx, yy, Z, alpha=0.25, cmap="bwr", levels=[-0.5, 0.5, 1.5])
 
     for clase, color, marker in [(0, "steelblue", "o"), (1, "tomato", "s")]:
@@ -80,6 +81,7 @@ def plot_decision_boundary(
             linewidths=0.6, s=70, label=f"Clase {clase}",
         )
 
+    # Línea de decisión: w0*x1 + w1*x2 + b = 0  →  x2 = -(w0*x1 + b) / w1
     if abs(perceptron.weights[1]) > 1e-8:
         x_line = np.linspace(x_min, x_max, 200)
         y_line = -(perceptron.weights[0] * x_line + perceptron.bias) / perceptron.weights[1]
@@ -114,7 +116,7 @@ def demo_and():
     print("=" * 55)
 
     X_and = np.array([[0, 0], [0, 1], [1, 0], [1, 1]], dtype=float)
-    y_and = np.array([0, 0, 0, 1])
+    y_and = np.array([0, 0, 0, 1])  # AND: solo (1,1) → 1
 
     p_and = Perceptron(n_inputs=2, learning_rate=0.1, max_epochs=100)
     p_and.train(X_and, y_and)
@@ -141,13 +143,14 @@ def demo_synthetic():
     rng = np.random.default_rng(0)
     n = 50
 
+    # Dos nubes de puntos separadas: clase 0 en (1,1), clase 1 en (4,4)
     X0 = rng.normal(loc=[1.0, 1.0], scale=0.6, size=(n, 2))
     X1 = rng.normal(loc=[4.0, 4.0], scale=0.6, size=(n, 2))
 
     X_syn = np.vstack([X0, X1])
     y_syn = np.array([0] * n + [1] * n)
 
-    idx = rng.permutation(len(y_syn))
+    idx = rng.permutation(len(y_syn))  # mezclar para no entrenar en orden de clase
     X_syn, y_syn = X_syn[idx], y_syn[idx]
 
     p_syn = Perceptron(n_inputs=2, learning_rate=0.1, max_epochs=100)
